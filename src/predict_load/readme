@@ -1,0 +1,7 @@
+
+
+kde.py  -- use kernel density esitmates 
+
+cl_reg.py -- do regression or classification
+
+gen_training_data.py -- generate training dataset
