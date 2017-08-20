@@ -3,6 +3,9 @@
 Created on Mon Aug 14 23:37:21 2017
 
 @author: Administrator
+
+Extract useful fields from the raw data for the following analysis
+
 """
 
 

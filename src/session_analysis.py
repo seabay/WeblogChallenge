@@ -3,6 +3,10 @@
 Created on Tue Aug 15 09:36:54 2017
 
 @author: Administrator
+
+Compute time length for each session, 
+compute unique URL visits for each session
+
 """
 
 import pandas as pd

@@ -3,6 +3,9 @@
 Created on Tue Aug 15 13:06:04 2017
 
 @author: Administrator
+
+Compute request counts per minute and per second
+
 """
 import math
 
