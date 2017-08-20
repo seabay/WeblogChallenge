@@ -20,7 +20,8 @@ def visual():
     
      raw_data = pd.read_csv("s_train.data", sep='\t', names=['hour', 'minute', 'second', 'count', 'label', 'elaps']);
      
-     #print(raw_data['count'].describe())
+     print(raw_data['count'].describe())
+     raw_data['count'].hist(bins=50, figsize=(10,10))
      
      raw_data = np.loadtxt("s_train.data", delimiter='\t');
      #data = raw_data[['elaps', 'count']]
@@ -144,7 +145,7 @@ def kde(path, column):
     plt.show()
     
     #print(kernel.factor)
-    print(kernel.resample(10))
+    print(kernel.resample(1))
     
 def gmm(path, column):
     
@@ -276,7 +277,7 @@ kde_funcnames = ['Statsmodels-U', 'Scipy', 'Scikit-learn']
     
 if __name__ == '__main__':
     
-    comp_kde("s_train.data", 3)
+    #comp_kde("s_train.data", 3)
     kde("s_train.data", 3)
     #gmm("s_train.data", 3)
-    visual()
+    #visual()
