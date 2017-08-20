@@ -9,7 +9,6 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
-from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.metrics import mean_squared_error
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_predict
@@ -17,19 +16,9 @@ from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 from sklearn.svm import SVC
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.svm import LinearSVR
 from sklearn.svm import SVR
-
-# Create a class to select numerical or categorical columns 
-# since Scikit-Learn doesn't handle DataFrames yet
-class DataFrameSelector(BaseEstimator, TransformerMixin):
-    def __init__(self, attribute_names):
-        self.attribute_names = attribute_names
-    def fit(self, X, y=None):
-        return self
-    def transform(self, X):
-        return X[self.attribute_names].values
-    
+from sklearn.model_selection import GridSearchCV
+from sklearn.ensemble import RandomForestRegressor
     
 def do_rf(data):
     
@@ -149,7 +138,7 @@ def do_gbm(data):
     X_test = test_set[:, :132]
     y_test = test_set[:,132];
     
-    gbrt = GradientBoostingRegressor(max_depth=2, n_estimators=80, learning_rate=0.8)
+    gbrt = GradientBoostingRegressor(max_depth=2, n_estimators=120, learning_rate=0.7)
     
     min_val_error = float("inf")
     error_going_up = 0
@@ -194,10 +183,27 @@ def do_svr(data):
     X_train = train_set[:, :132]
     y_train = train_set[:, 132];
     
-    svm_reg = SVR(kernel="rbf", gamma=5, C=100, epsilon=20)
-    svm_reg.fit(X_train, y_train)
+    '''
+    #use GridSearch find best hyperparameters
+    param_grid = [
+        {'kernel': ['poly'], 'C': [10., 30., 100., 300., 1000], 'degree':[2,3,4]},
+        {'kernel': ['rbf'], 'C': [1.0, 3.0, 10., 30., 100],
+         'gamma': [0.01, 0.03, 0.1, 0.3, 1.0, 3.0]},
+    ]
+
+    svm_reg = SVR()
+    grid_search = GridSearchCV(svm_reg, param_grid, cv=5, scoring='neg_mean_squared_error', verbose=2, n_jobs=4)
+    grid_search.fit(X_train, y_train)
     
-    predictions = svm_reg.predict(X_train)
+    print(grid_search.best_params_)  # {'gamma': 0.3, 'C': 100, 'kernel': 'rbf'}
+    
+    best_model = grid_search.best_estimator_
+    '''
+    
+    best_model = SVR(kernel='rbf', C=100, gamma=0.3)
+    best_model.fit(X_train, y_train)
+    
+    predictions = best_model.predict(X_train)
     lin_mse = mean_squared_error(y_train,predictions)
     lin_rmse = np.sqrt(lin_mse)
     print(lin_rmse)
@@ -205,26 +211,81 @@ def do_svr(data):
     
     X_test = test_set[:, :132]
     y_test = test_set[:,132];
-    predictions = svm_reg.predict(X_test)
+    predictions = best_model.predict(X_test)
     lin_mse = mean_squared_error(y_test,predictions)
     lin_rmse = np.sqrt(lin_mse)
     print(lin_rmse)
     
-def regress():
+def do_rfrg(data):
+    
+    print("############ RandomForestRegression ################")
+    encoder = LabelBinarizer()
+    hour_cat = data["hour"]
+    min_cat = data["minute"]
+    sds_cat = data["second"]
+    hour_cat_1hot = encoder.fit_transform(hour_cat)
+    min_cat_1hot = encoder.fit_transform(min_cat)
+    sds_cat_1hot = encoder.fit_transform(sds_cat)
+    
+    data_prep = np.c_[hour_cat_1hot, min_cat_1hot, sds_cat_1hot, data['count']]
+    
+    train_set, test_set = train_test_split(data_prep, test_size=0.2, random_state=42)
+    X_train = train_set[:, :132]
+    y_train = train_set[:, 132];
+    
+    '''
+    #use GridSearch find best hyperparameters
+    
+    param_grid = [
+    {'n_estimators': [50, 100, 150, 300, 1000], 'max_features': [2, 3]},
+    {'bootstrap': [False], 'n_estimators': [50, 100, 150, 300, 1000], 'max_features': [2, 3]} ]
+
+    forest_reg = RandomForestRegressor(random_state=42)
+    grid_search = GridSearchCV(forest_reg, param_grid, cv=5,
+                               scoring='neg_mean_squared_error')
+    grid_search.fit(X_train, y_train)
+    
+    print(grid_search.best_params_)  # {'n_estimators': 300, 'max_features': 3}
+    
+    print(grid_search.best_estimator_.max_depth)
+    
+    best_model = grid_search.best_estimator_
+    '''
+    
+    best_model = RandomForestRegressor(n_estimators=300, max_features=3)
+    best_model.fit(X_train, y_train)
+    predictions = best_model.predict(X_train)
+    lin_mse = mean_squared_error(y_train,predictions)
+    lin_rmse = np.sqrt(lin_mse)
+    print(lin_rmse)
+    
+    
+    X_test = test_set[:, :132]
+    y_test = test_set[:,132];
+    predictions = best_model.predict(X_test)
+    lin_mse = mean_squared_error(y_test,predictions)
+    lin_rmse = np.sqrt(lin_mse)
+    print(lin_rmse)
+    
+def regression():
     raw_data = pd.read_csv("s_train.data", sep='\t', names=['hour', 'minute', 'second', 'count', 'label', 'elaps']);
     data = raw_data[['hour', 'minute', 'second', 'count']]
     
+    '''
     print(raw_data["count"].describe())
-    corr_matrix = data.corr()
     
+    corr_matrix = data.corr()
     print("######## correlation matrix ##########")
     print(corr_matrix['count'])
+    '''
     
     do_gbm(data)
     
     do_svr(data)
     
+    do_rfrg(data)
+    
 if __name__ == '__main__':
     
-    regress()
+    regression()
         

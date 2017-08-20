@@ -15,21 +15,21 @@ from scipy import stats
 
 def kde(path, column):
     
-    print('############ KDE #############')
+    print('############ Adopt scipy kde #############')
     
     raw_data = pd.read_csv(path, sep='\t', names=['ip', 'session', 'url'])
     #raw_data = np.loadtxt(path, delimiter='\t'); 
     np.random.seed()
     
     data = raw_data.groupby('ip')['url'].sum()
-    print(data[0])
-    
-    xmax = max(data)
-    xmin = min(data)
-    print(xmax, xmin)
+    #print(data[0])
+    #print(xmax, xmin)
     #X = data[:,np.newaxis]
 
-    kernel = stats.gaussian_kde(data)
+    #kernel = stats.gaussian_kde(data)
+    
+    X = data[:, np.newaxis]
+    kernel = KernelDensity(kernel='gaussian', bandwidth=0.6).fit(X)
     
     return kernel
 
@@ -55,11 +55,14 @@ def visual(path):
 
     fig, ax = plt.subplots(figsize=(10,10))
     
+    
+    #################################################
+    ### use sklearn tool to do KDE estimation
     for kernel in ['gaussian']:
         kde = KernelDensity(kernel=kernel, bandwidth=0.6).fit(X)
         log_dens = kde.score_samples(X_plot)
         ax.plot(X_plot[:, 0], np.exp(log_dens), '-',
-                label="kernel = '{0}'".format(kernel), markersize=2)
+                label="kernel = sklearn '{0}'".format(kernel), markersize=2)
     
     ax.text(40, 0.005, "N={0} points".format(X.shape[0]))
     
@@ -69,16 +72,17 @@ def visual(path):
     ax.set_xlim(xmin, xmax)
     ax.set_ylim(-0.001, 0.2)
     plt.show()
-     
-    ################################
     
+    
+    #################################################
+    ### use scipy tool to do KDE estimation
+    ### not as good as sklearn
     kernel = stats.gaussian_kde(X[:, 0])
     #X_plot = np.linspace(xmin, 200, 100)[:, np.newaxis]
     pdf = kernel.evaluate(X_plot[:,0])
     fig = plt.figure(figsize=(10,10))
     ax = fig.add_subplot(111)
-    #ax.imshow((1,1), cmap=plt.cm.gist_earth_r,extent=[xmin, xmax])
-    ax.plot(X_plot[:,0], pdf, '-', label="kernel = gaussian", markersize=2)
+    ax.plot(X_plot[:,0], pdf, '-', label="kernel = scipy gaussian", markersize=2)
     ax.text(40, 0.0012, "N={0} points".format(X.shape[0]))
     ax.legend(loc='upper left')
     ax.set_xlim([xmin, xmax])
@@ -130,8 +134,9 @@ def gmm(path, column):
 
 def predict(kernel):  
     
-    v = np.ceil(np.sum(kernel.resample(10)) / 10)
-    print(v)
+    #v = int((np.sum(kernel.sample(10)) / 10))
+    v = int(kernel.sample(1))
+    #print(v)
     
     if v < 1:
         v = 1
@@ -139,7 +144,9 @@ def predict(kernel):
     return v
     
 if __name__ == '__main__':
-     #kernel = kde("ip_session.data", 2)
-     #print("Predict: " + str(predict(kernel)))
+     kernel = kde("ip_session.data", 2)
+     
+     for i in range(10):
+         print("Predict: " + str(predict(kernel)))
      #gmm("ip_session.data", 2)
-     visual("ip_session.data")
+     #visual("ip_session.data")

@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 SESSION_TIME = 900 # 15*60
 
-def sep_by_range(path):
+def sep_by_window(path):
     
     file = open(path, 'w+')
     
@@ -177,7 +177,7 @@ def visual(path):
 if __name__ == '__main__':
     #process()
     path1 = "predict_ip_info\ip_session.data";
-    sep_by_range(path1)
+    sep_by_window(path1)
     visual(path1)
     
     path2 = "predict_ip_info\ip_session_by_gap.data"

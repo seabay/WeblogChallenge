@@ -14,18 +14,17 @@ import sklearn.mixture
 from scipy import stats
 from scipy.stats import gaussian_kde
 from statsmodels.nonparametric.kde import KDEUnivariate
-from statsmodels.nonparametric.kernel_density import KDEMultivariate
 
 
 def visual():
     
      raw_data = pd.read_csv("s_train.data", sep='\t', names=['hour', 'minute', 'second', 'count', 'label', 'elaps']);
      
-     print(raw_data['count'].describe())
+     #print(raw_data['count'].describe())
      
      raw_data = np.loadtxt("s_train.data", delimiter='\t');
      #data = raw_data[['elaps', 'count']]
-     print(raw_data[:,5]) 
+     #print(raw_data[:,5]) 
      plt.figure(figsize=(30,20))
      plt.scatter(raw_data[:,5],raw_data[:,3]) 
      p1 = plt.subplot(211)
@@ -33,7 +32,7 @@ def visual():
      plt.scatter(raw_data[:,5],raw_data[:,3])
      
      raw_data = np.loadtxt("m_train.data", delimiter='\t');
-     print(raw_data[:,4]) 
+     #print(raw_data[:,4]) 
      p2 = plt.subplot(212)
      p2.plot(raw_data[:,4],raw_data[:,2],"g-",label="count")
      plt.scatter(raw_data[:,4],raw_data[:,2]) 
@@ -120,7 +119,7 @@ def kde(path, column):
         kde = KernelDensity(kernel=kernel, bandwidth=0.6).fit(X)
         log_dens = kde.score_samples(X_plot)
         ax.plot(X_plot[:, 0], np.exp(log_dens), 'k.',
-                label="kernel = '{0}'".format(kernel), markersize=2)
+                label="kernel = kde_sklearn '{0}'".format(kernel), markersize=2)
     
     ax.text(700, 0.005, "N={0} points".format(X.shape[0]))
     
@@ -138,17 +137,17 @@ def kde(path, column):
     fig = plt.figure(figsize=(10,10))
     ax = fig.add_subplot(111)
     #ax.imshow((1,1), cmap=plt.cm.gist_earth_r,extent=[xmin, xmax])
-    ax.plot(X_plot[:,0], pdf, 'k.', label="kernel = gaussian", markersize=2)
+    ax.plot(X_plot[:,0], pdf, 'k.', label="kernel = kde_scipy gaussian", markersize=2)
     ax.text(700, 0.0035, "N={0} points".format(X.shape[0]))
     ax.legend(loc='upper left')
     ax.set_xlim([xmin, xmax])
     plt.show()
     
-    print(kernel.factor)
+    #print(kernel.factor)
     print(kernel.resample(10))
     
 def gmm(path, column):
-    ###############################
+    
     
     gmm = sklearn.mixture.GaussianMixture(n_components=4)
     # sample data
@@ -177,38 +176,68 @@ def gmm(path, column):
     ax.legend(loc='upper left')
     ax.set_xlim([xmin, xmax])
     plt.show()
-    ###############################################
+    
     
 def kde_scipy(x, x_grid, bandwidth=0.2, **kwargs):
+    
     """Kernel Density Estimation with Scipy"""
-    # Note that scipy weights its bandwidth by the covariance of the
-    # input data.  To make the results comparable to the other methods,
-    # we divide the bandwidth by the sample standard deviation here.
-    kde = gaussian_kde(x, bw_method=bandwidth / x.std(ddof=1), **kwargs)
-    return kde.evaluate(x_grid)
+    
+    #kde = gaussian_kde(x, bw_method=bandwidth / x.std(ddof=1), **kwargs)
+    kde = gaussian_kde(x)
+    pdf = kde.evaluate(x_grid)
+    
+    fig = plt.figure(figsize=(10,10))
+    ax = fig.add_subplot(111)
+    #ax.imshow((1,1), cmap=plt.cm.gist_earth_r,extent=[xmin, xmax])
+    ax.plot(x_grid, pdf, 'k.', label="kernel = kde_scipy gaussian", markersize=2)
+    ax.text(700, 0.0035, "N={0} points".format(x.shape[0]))
+    ax.legend(loc='upper left')
+    ax.set_xlim([min(x), max(x)])
+    ax.set_ylim(-0.001, 0.006)
+    plt.show()
 
 
 def kde_statsmodels_u(x, x_grid, bandwidth=0.2, **kwargs):
+    
     """Univariate Kernel Density Estimation with Statsmodels"""
+    
     kde = KDEUnivariate(x)
-    kde.fit(bw=bandwidth, **kwargs)
-    return kde.evaluate(x_grid)
-    
-    
-def kde_statsmodels_m(x, x_grid, bandwidth=0.2, **kwargs):
-    """Multivariate Kernel Density Estimation with Statsmodels"""
-    kde = KDEMultivariate(x, bw=bandwidth * np.ones_like(x),
-                          var_type='c', **kwargs)
-    return kde.pdf(x_grid)
+    #kde.fit(bw=bandwidth, **kwargs)
+    kde.fit()
+    pdf = kde.evaluate(x_grid)
+
+    fig = plt.figure(figsize=(10,10))
+    ax = fig.add_subplot(111)
+    #ax.imshow((1,1), cmap=plt.cm.gist_earth_r,extent=[xmin, xmax])
+    ax.plot(x_grid, pdf, 'k.', label="kernel = kde_statsmodels_u gaussian", markersize=2)
+    ax.text(700, 0.0035, "N={0} points".format(x.shape[0]))
+    ax.legend(loc='upper left')
+    ax.set_xlim([min(x), max(x)])
+    ax.set_ylim(-0.001, 0.006)
+    plt.show()
 
 
-def kde_sklearn(x, x_grid, bandwidth=0.2, **kwargs):
+def kde_sklearn(x, x_grid, bandwidth=0.8, **kwargs):
+    
     """Kernel Density Estimation with Scikit-learn"""
+    
     kde_skl = KernelDensity(bandwidth=bandwidth, **kwargs)
+    #kde_skl = KernelDensity()
     kde_skl.fit(x[:, np.newaxis])
     # score_samples() returns the log-likelihood of the samples
     log_pdf = kde_skl.score_samples(x_grid[:, np.newaxis])
-    return np.exp(log_pdf)
+  
+    pdf = np.exp(log_pdf)
+
+    fig = plt.figure(figsize=(10,10))
+    ax = fig.add_subplot(111)
+    #ax.imshow((1,1), cmap=plt.cm.gist_earth_r,extent=[xmin, xmax])
+    ax.plot(x_grid, pdf, '.', label="kernel = kde_sklearn gaussian", markersize=2)
+    ax.text(700, 0.0035, "N={0} points".format(x.shape[0]))
+    ax.legend(loc='upper left')
+    ax.set_xlim([min(x), max(x)])
+    ax.set_ylim(-0.001, 0.006)
+    plt.show()
 
 
 def comp_kde(path, column):
@@ -222,8 +251,10 @@ def comp_kde(path, column):
     #print(xmax, xmin)
     X = raw_data[:,column]
     #print(X.shape)
-    X_plot = np.linspace(xmin, xmax, 200)
+    X_plot = np.linspace(xmin, xmax, 500)
     
+    
+    '''
     fig, ax = plt.subplots(3, 1, sharey=True,
                        figsize=(10, 30))
     
@@ -231,44 +262,21 @@ def comp_kde(path, column):
     
     for i in range(3):
         pdf = kde_funcs[i](X, X_plot)
-        ax[i].plot(X_plot, pdf, color='blue', alpha=0.3, lw=3)
+        ax[i].plot(X_plot, pdf, 'k.', color='blue', alpha=0.3, lw=3)
         ax[i].set_title(kde_funcnames[i])
         ax[i].set_xlim(xmin, xmax)
         ax[i].set_ylim(-0.001, 0.006)
-
-
-def test2():
-    # The grid we'll use for plotting
-    x_grid = np.linspace(-4.5, 3.5, 1000)
-    print(x_grid.shape)
-    # Draw points from a bimodal distribution in 1D
-    np.random.seed(0)
-    x = np.concatenate([norm(-1, 1.).rvs(400),
-                        norm(1, 0.3).rvs(100)])
-    
-    print(x.shape)
-    
-    pdf_true = (0.8 * norm(-1, 1).pdf(x_grid) +
-                0.2 * norm(1, 0.3).pdf(x_grid))
-    
-    # Plot the three kernel density estimates
-    fig, ax = plt.subplots(1, 3, sharey=True,
-                           figsize=(13, 3))
-    fig.subplots_adjust(wspace=0)
-    
+     '''
+     
     for i in range(3):
-        pdf = kde_funcs[i](x, x_grid, bandwidth=0.2)
-        ax[i].plot(x_grid, pdf, color='blue', alpha=0.5, lw=3, markersize=2)
-        ax[i].fill(x_grid, pdf_true, ec='gray', fc='gray', alpha=0.4)
-        ax[i].set_title(kde_funcnames[i])
-        ax[i].set_xlim(-4.5, 3.5)
+        kde_funcs[i](X, X_plot)
 
 kde_funcs = [kde_statsmodels_u, kde_scipy, kde_sklearn]
 kde_funcnames = ['Statsmodels-U', 'Scipy', 'Scikit-learn']
     
 if __name__ == '__main__':
     
-    #comp_kde("s_train.data", 3)
-    #kde("s_train.data", 3)
+    comp_kde("s_train.data", 3)
+    kde("s_train.data", 3)
     #gmm("s_train.data", 3)
     visual()

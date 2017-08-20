@@ -75,9 +75,9 @@ def visual(path, column):
 
 def predict(kernel):
     
-    v = np.ceil(np.sum(kernel.resample(10)) / 10)
+    v = int(kernel.resample(1))
     
-    print(v)
+    #print(v)
     
     if v < 1:
         v = 1
