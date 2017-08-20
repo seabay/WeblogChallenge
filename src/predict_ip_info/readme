@@ -1,9 +1,0 @@
-
-
-ip_session_kde.py:
-Use kernel density esitmation method estimate the probability distribution of the session length, 
-and then sample values from the distribution as predictions for the session length for a given IP.
-
-ip_url_kde.py:
-Use kernel density esitmation method estimate the probability distribution of the number of unique URL visits, 
-and then sample values from the distribution as predictions for the number of unique URL visits by a given IP.
