@@ -3,10 +3,6 @@
 Created on Tue Aug 15 09:36:54 2017
 
 @author: Administrator
-
-Compute time length for each session, 
-compute unique URL visits for each session
-
 """
 
 import pandas as pd
@@ -15,7 +11,7 @@ import matplotlib.pyplot as plt
 
 SESSION_TIME = 900 # 15*60
 
-def sep_by_window(path):
+def sep_by_range(path):
     
     file = open(path, 'w+')
     
@@ -77,7 +73,9 @@ def sep_by_window(path):
         session[cur_ip] = [(end_time-start_time, len(uniq_url))]
     uniq_url.clear();
            
-    #file.write("ip\tsession\n")
+    #######################################################
+    session_time = {}
+    
     for k in sorted(session.keys()):
         for t in session[k]:           
             ses_len = t[0]
@@ -85,7 +83,19 @@ def sep_by_window(path):
             if ses_len==0:
                 ses_len=1
             file.write(k+"\t"+str(ses_len)+"\t"+str(url_cnt)+"\n")
+            
+            
+            if k not in session_time:
+                session_time[k] = ses_len
+            else:
+                session_time[k] += ses_len;
+            
     file.close();
+
+    st = sorted(session_time.items(), key=lambda d:d[1], reverse = True)
+    print('IP has the longest session time:' )
+    for i in range(5):
+        print(st[i])
     
 
 def sep_by_gap(path):
@@ -153,7 +163,9 @@ def sep_by_gap(path):
         session[cur_ip] = [(end_time-start_time, len(uniq_url))]
     uniq_url.clear();
            
-    #file.write("ip\tsession\n")
+    
+    session_time = {}
+    
     for k in sorted(session.keys()):
         for t in session[k]:           
             ses_len = t[0]
@@ -161,7 +173,19 @@ def sep_by_gap(path):
             if ses_len==0:
                 ses_len=1
             file.write(k+"\t"+str(ses_len)+"\t"+str(url_cnt)+"\n")
+            
+            
+            if k not in session_time:
+                session_time[k] = ses_len
+            else:
+                session_time[k] += ses_len;
+            
     file.close();
+
+    st = sorted(session_time.items(), key=lambda d:d[1], reverse = True)
+    print('IP has the longest session time:' )
+    for i in range(5):
+        print(st[i])
 
 
 def visual(path):
@@ -173,15 +197,15 @@ def visual(path):
     
     data.hist(bins=100, column='session', figsize=(10,10))
     
-    url_count = data['url_count']
-    print(url_count.shape)
+    #url_count = data['url_count']
+    #print(url_count.shape)
     #data.hist(bins=10000, column='url_count', figsize=(10,10))
     plt.show()
     
 if __name__ == '__main__':
     #process()
     path1 = "predict_ip_info\ip_session.data";
-    sep_by_window(path1)
+    sep_by_range(path1)
     visual(path1)
     
     path2 = "predict_ip_info\ip_session_by_gap.data"

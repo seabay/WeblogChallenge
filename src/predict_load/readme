@@ -15,3 +15,17 @@ Use regression or classification models predict the request counts within a seco
 gen_training_data.py:
 
 Generate training dataset for classification and regression models.
+
+
+#############################################################
+
+
+How to run ?
+
+0. python ..\gen_request_load.py  -- compute request count within minute or second
+
+1. python gen_training_data.py  -- generate training dataset
+
+2. python kde.py  -- sample based on kerne1 density esitmation
+
+3. python cl_reg.py  -- do classification or regression

@@ -22,30 +22,41 @@ from sklearn.ensemble import RandomForestRegressor
     
 def do_rf(data):
     
-    
+    print("\n############ RandomForestClassifier ################")
+          
     train_set, test_set = train_test_split(data, test_size=0.2, random_state=42)   
     
     X_train = train_set.drop("label", axis=1)
     y_train = train_set['label'].copy();
-    print(y_train.shape, X_train.shape)
+    #print(y_train.shape, X_train.shape)
     
     X_test = test_set.drop("label", axis=1)
-    print(X_test.shape)
+    #print(X_test.shape)
     y_test = test_set['label'].copy();
     
-    rnd_clf = RandomForestClassifier(n_estimators=1500, max_leaf_nodes=16, n_jobs=-1)
-    
     '''
-    rnd_clf.fit(X_train, y_train)
-    y_pred_rf = rnd_clf.predict(X_test)
-    n_correct = sum(y_pred_rf == y_test)
-    print(n_correct / len(y_pred_rf))
+    #use GridSearch find best hyperparameters
+    param_grid = [
+    {'n_estimators': [50, 100, 150, 300, 1000, 1500], 'max_features': [2, 3], 'max_leaf_nodes': [4, 10, 16]},
+    {'bootstrap': [False], 'n_estimators': [50, 100, 150, 300, 1000,1500], 'max_features': [2, 3], 'max_leaf_nodes': [4, 10, 16]} ]
+
+    forest_reg = RandomForestClassifier(random_state=42)
+    grid_search = GridSearchCV(forest_reg, param_grid, cv=5,
+                               scoring='accuracy')
+    grid_search.fit(X_train, y_train)
+    
+    print(grid_search.best_params_)  # {'n_estimators': 50, 'max_features': 2}
+    
+    best_model = grid_search.best_estimator_
     '''
     
-    y_train_pred = cross_val_predict(rnd_clf, X_train, y_train, cv=3)
-    #print(y_train_pred)
-    n_correct = sum(y_train_pred == y_test)
-    print(n_correct / len(y_train_pred))
+    best_model = RandomForestClassifier(n_estimators=1500, max_leaf_nodes=16, max_features=3)
+    best_model.fit(X_train, y_train)
+    
+    #y_train_pred = cross_val_predict(best_model, X_train, y_train, cv=10)
+    y_train_pred = best_model.predict(X_train)
+    n_correct = sum(y_train_pred == y_train)
+    print('Train accuracy {0}'.format(n_correct / len(y_train_pred)))
     conf_mx = confusion_matrix(y_train, y_train_pred)
     #print(conf_mx)
     plt.matshow(conf_mx, cmap=plt.cm.gray)
@@ -60,8 +71,16 @@ def do_rf(data):
     
     
     
+    y_pred_rf = best_model.predict(X_test)
+    n_correct = sum(y_pred_rf == y_test)
+    print('Test accuracy {0}'.format(n_correct / len(y_pred_rf)))
+    
+    
+    
 def do_svm(data):
-        
+    
+    print("\n############ SVM ################")
+    
     encoder = LabelBinarizer()
     hour_cat = data["hour"]
     min_cat = data["minute"]
@@ -75,33 +94,68 @@ def do_svm(data):
     
     train_set, test_set = train_test_split(data_prep, test_size=0.2, random_state=42)
     
-    print(train_set)
+    #print(train_set)
     X_train = train_set[:, :132]
     print(X_train.shape)
     y_train = train_set[:, 132];
-    print(y_train.shape, X_train.shape)
+    #print(y_train.shape, X_train.shape)
     
     X_test = test_set[:, :132]
     print(X_test.shape)
     y_test = test_set[:,132];
     
-    svm = SVC(kernel="poly", degree=3, coef0=1, C=5)
-    svm.fit(X_train, y_train)
+
+    '''
+    #use GridSearch find best hyperparameters
+    param_grid = [
+        {'kernel': ['poly'], 'C': [10., 30., 100., 300., 1000], 'degree':[2,3,4]},
+        {'kernel': ['rbf'], 'C': [1.0, 3.0, 10., 30., 100],
+         'gamma': [0.01, 0.03, 0.1, 0.3, 1.0, 3.0]},
+    ]
+
     
-    y_pred_rf = svm.predict(X_train)
-    n_correct = sum(y_pred_rf == y_train)
-    print(n_correct / len(y_pred_rf))
+    svm = SVC()
+    grid_search = GridSearchCV(svm, param_grid, cv=5, scoring='accuracy', verbose=2, n_jobs=4)
+    grid_search.fit(X_train, y_train)
     
-    y_pred_rf = svm.predict(X_test)
+    print(grid_search.best_params_)  # {'gamma': 0.03, 'C': 100, 'kernel': 'rbf'}
+    
+    best_model = grid_search.best_estimator_
+    '''
+    
+    best_model = SVC(gamma = 0.03, C=100, kernel='rbf')   ### OVO
+    best_model.fit(X_train, y_train)
+    
+    
+    #y_train_pred = cross_val_predict(best_model, X_train, y_train, cv=10)
+    
+    y_train_pred = best_model.predict(X_train)
+    n_correct = sum(y_train_pred == y_train)
+    print('Train accuracy {0}'.format(n_correct / len(y_train_pred)))
+    conf_mx = confusion_matrix(y_train, y_train_pred)
+    #print(conf_mx)
+    plt.matshow(conf_mx, cmap=plt.cm.gray)
+    plt.show()
+    
+    
+    row_sums = conf_mx.sum(axis=1, keepdims=True)
+    norm_conf_mx = conf_mx / row_sums
+    np.fill_diagonal(norm_conf_mx, 0)
+    plt.matshow(norm_conf_mx, cmap=plt.cm.gray)
+    plt.show()
+    
+    
+    
+    y_pred_rf = best_model.predict(X_test)
     n_correct = sum(y_pred_rf == y_test)
-    print(n_correct / len(y_pred_rf))
- 
+    print('Test accuracy {0}'.format(n_correct / len(y_pred_rf)))
+    
     
     
 def classify():
     
     raw_data = pd.read_csv("s_train.data", sep='\t', names=['hour', 'minute', 'second', 'count', 'label', 'elaps']);
-    raw_data['count'].hist(bins=100)
+    #raw_data['count'].hist(bins=100)
     #raw_data['label'].hist(bins=20)
     
     
@@ -109,13 +163,13 @@ def classify():
     
     do_svm(data)
     
-    do_rf(data);
+    #do_rf(data);
     
     
 
 def do_gbm(data):
     
-    print("############ GBM ################")
+    print("\n############ GBM ################")
     encoder = LabelBinarizer()
     hour_cat = data["hour"]
     min_cat = data["minute"]
@@ -168,7 +222,7 @@ def do_gbm(data):
 
 def do_svr(data):
     
-    print("############ SVR ################")
+    print("\n############ SVR ################")
     encoder = LabelBinarizer()
     hour_cat = data["hour"]
     min_cat = data["minute"]
@@ -218,7 +272,7 @@ def do_svr(data):
     
 def do_rfrg(data):
     
-    print("############ RandomForestRegression ################")
+    print("\n############ RandomForestRegression ################")
     encoder = LabelBinarizer()
     hour_cat = data["hour"]
     min_cat = data["minute"]
@@ -279,13 +333,14 @@ def regression():
     print(corr_matrix['count'])
     '''
     
-    do_gbm(data)
+    #do_gbm(data)
     
-    do_svr(data)
+    #do_svr(data)
     
     do_rfrg(data)
     
 if __name__ == '__main__':
     
     regression()
+    classify()
         

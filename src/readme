@@ -1,0 +1,12 @@
+
+gen_request_load.py  -- compute request count within minute or second
+
+extract_columns.py -- Extract useful fields from the raw data for the following analysis
+
+session_analysis.py -- Compute the session length and unique URL visits for each session, and get the IP with the longest session time
+
+
+
+0. python extract_columns.py
+1. python session_analysis.py
+2. python gen_request_load.py
