@@ -1,0 +1,11 @@
+
+
+kde.py:
+Use kernel density esitmation method estimate the probability distribution of the request count within a second, 
+and then sample values from the distribution as predictions for the request counts.
+
+cl_reg.py:
+Use regression or classification models predict the request counts within a second.
+
+gen_training_data.py:
+Generate training dataset for classification and regression models.
