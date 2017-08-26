@@ -101,7 +101,7 @@ NumTree:200	MaxIter:200	MaxDepth:3
 RandomforestRegressor: Root Mean Squared Error (RMSE) on test data = 85.72054943426294
 
 LinearRegression: Root Mean Squared Error (RMSE) on test data = 67.25
-Elatic:0.1	Reg;0.01
+Elastic:0.1	Reg:0.01
 ```
 
 2. Predict the session length for a given IP

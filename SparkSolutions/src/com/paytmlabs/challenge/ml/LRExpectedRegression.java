@@ -89,7 +89,7 @@ public class LRExpectedRegression {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		System.out.println("Elatic:"+lrm.getElasticNetParam() + "\tReg;"+lrm.getRegParam());
+		System.out.println("Elastic:"+lrm.getElasticNetParam() + "\tReg:"+lrm.getRegParam());
 
 		return cvModel;
 	}
