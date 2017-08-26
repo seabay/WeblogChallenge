@@ -10,14 +10,17 @@ The challenge is to make make analytical observations about the data using the d
 
 2. Determine the average session time
 
+```
 +-----------------+
 |      avg(elapse)|
 +-----------------+
 |89.55637293816706|
 +-----------------+
+```
 
 3. Determine unique URL visits per session. To clarify, count a hit to a unique URL only once per session.
 
+```
 +---------------+----------------+
 |             ip|unique_url_count|
 +---------------+----------------+
@@ -42,9 +45,11 @@ The challenge is to make make analytical observations about the data using the d
 | 168.235.194.72|               2|
 |   113.193.33.7|               1|
 +---------------+----------------+
-
+```
 
 4. Find the most engaged users, ie the IPs with the longest session times
+
+```
 +---------------+--------------+
 |             ip|session_length|
 +---------------+--------------+
@@ -69,6 +74,7 @@ The challenge is to make make analytical observations about the data using the d
 |  116.50.59.180|        3723.0|
 | 177.71.207.172|        3704.0|
 +---------------+--------------+
+```
 
 ## Additional questions for Machine Learning Engineer (MLE) candidates:
 1. Predict the expected load (requests/second) in the next minute
