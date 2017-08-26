@@ -85,43 +85,5 @@ public class SessionRecord implements Serializable {
 		return "SessionRecord [ip=" + ip + ", start=" + start + ", end=" + end + ", elapse=" + elapse + ", urlCount="
 				+ urlCount + "]";
 	}
-	
-	
 
-}
-
-@SuppressWarnings("serial")
-class GenSessionRecord implements Function2<Record, Record, SessionRecord> {
-
-	@Override
-	public SessionRecord call(Record r1, Record r2) throws Exception {
-
-		SessionRecord r = new SessionRecord();
-
-		String ip1 = r1.clientIP;
-		String ip2 = r1.clientIP;
-
-		if (ip1.compareTo(ip2) == 0) {
-			r.setIp(ip2);
-			;
-			r.setElapse(r2.getElapse() - r1.getElapse());
-			r.setUrlCount(2);
-			r.setStart(r1.getTimestamp());
-			r.setEnd(r2.getTimestamp());
-		}
-
-		return r;
-	}
-}
-
-class GenPair implements PairFunction<Record, String, Record> {
-
-	
-	private static final long serialVersionUID = 6104132123279619654L;
-
-	@Override
-	public Tuple2<String, Record> call(Record r) throws Exception {
-		String key = r.getClientIP();
-		return new Tuple2<>(key, r);
-	}
 }
