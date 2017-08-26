@@ -79,9 +79,17 @@ The challenge is to make make analytical observations about the data using the d
 ## Additional questions for Machine Learning Engineer (MLE) candidates:
 1. Predict the expected load (requests/second) in the next minute
 
+-Use python + sklearn + numpy + pandas + scipy
+-Use Java + Spark ML
+
 2. Predict the session length for a given IP
 
+-Use python + scipy + sklearn
+
 3. Predict the number of unique URL visits by a given IP
+
+-Use python + scipy + sklearn
+
 
 ### Tools allowed (in no particular order):
 - Spark (any language, but prefer Scala or Java)
@@ -89,13 +97,6 @@ The challenge is to make make analytical observations about the data using the d
 - MapReduce (Hadoop 2.x only)
 - Flink
 - Cascading, Cascalog, or Scalding
-
-If you need Hadoop, we suggest 
-HDP Sandbox:
-http://hortonworks.com/hdp/downloads/
-or 
-CDH QuickStart VM:
-http://www.cloudera.com/content/cloudera/en/downloads.html
 
 
 ### Additional notes:
@@ -106,22 +107,3 @@ http://www.cloudera.com/content/cloudera/en/downloads.html
 http://docs.aws.amazon.com/ElasticLoadBalancing/latest/DeveloperGuide/access-log-collection.html#access-log-entry-format
 
 
-
-## How to complete this challenge:
-
-A. Fork this repo in github
-    https://github.com/PaytmLabs/WeblogChallenge
-
-B. Complete the processing and analytics as defined first to the best of your ability with the time provided.
-
-C. Place notes in your code to help with clarity where appropriate. Make it readable enough to present to the Paytm Labs interview team.
-
-D. Complete your work in your own github repo and send the results to us and/or present them during your interview.
-
-## What are we looking for? What does this prove?
-
-We want to see how you handle:
-- New technologies and frameworks
-- Messy (ie real) data
-- Understanding data transformation
-This is not a pass or fail test, we want to hear about your challenges and your successes with this particular problem.
