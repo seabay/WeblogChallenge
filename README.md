@@ -7,6 +7,10 @@ The challenge is to make make analytical observations about the data using the d
 
 1. Sessionize the web log by IP. Sessionize = aggregrate all page hits by visitor/IP during a fixed time window.
     https://en.wikipedia.org/wiki/Session_(web_analytics)
+	
+```
+run BasicProcess.java
+```
 
 2. Determine the average session time
 
@@ -80,7 +84,21 @@ The challenge is to make make analytical observations about the data using the d
 1. Predict the expected load (requests/second) in the next minute
 
 - Use python + sklearn + numpy + pandas + scipy
+
+GBM: Root Mean Squared Error (RMSE) on test data = 67.7
+Randomforest: Root Mean Squared Error (RMSE) on test data =70.35
+SVR: Root Mean Squared Error (RMSE) on test data = 68.4
+
+
 - Use Java + Spark ML
+
+GBTRegressor: Root Mean Squared Error (RMSE) on test data = 67.05340870325756
+NumTree:200	MaxIter:200	MaxDepth:3
+
+RandomforestRegressor: Root Mean Squared Error (RMSE) on test data = 85.72054943426294
+
+LinearRegression: Root Mean Squared Error (RMSE) on test data = 67.25
+Elatic:0.1	Reg;0.01
 
 2. Predict the session length for a given IP
 
