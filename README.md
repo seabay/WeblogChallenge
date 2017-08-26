@@ -79,16 +79,16 @@ The challenge is to make make analytical observations about the data using the d
 ## Additional questions for Machine Learning Engineer (MLE) candidates:
 1. Predict the expected load (requests/second) in the next minute
 
--Use python + sklearn + numpy + pandas + scipy
--Use Java + Spark ML
+- Use python + sklearn + numpy + pandas + scipy
+- Use Java + Spark ML
 
 2. Predict the session length for a given IP
 
--Use python + scipy + sklearn
+- Use python + scipy + sklearn
 
 3. Predict the number of unique URL visits by a given IP
 
--Use python + scipy + sklearn
+- Use python + scipy + sklearn
 
 
 ### Tools allowed (in no particular order):
