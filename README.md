@@ -95,10 +95,10 @@ SVR: Root Mean Squared Error (RMSE) on test data = 68.4
 - Use Java + Spark ML
 
 ```
-GBTRegressor: Root Mean Squared Error (RMSE) on test data = 67.05340870325756
+GBTRegressor: Root Mean Squared Error (RMSE) on test data = 67.05
 NumTree:200	MaxIter:200	MaxDepth:3
 
-RandomforestRegressor: Root Mean Squared Error (RMSE) on test data = 85.72054943426294
+RandomforestRegressor: Root Mean Squared Error (RMSE) on test data = 85.72
 
 LinearRegression: Root Mean Squared Error (RMSE) on test data = 67.25
 Elastic:0.1	Reg:0.01

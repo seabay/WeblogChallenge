@@ -1,10 +1,18 @@
 package com.paytmlabs.challenge.ml;
 
+import java.io.IOException;
+
+import org.apache.log4j.PropertyConfigurator;
+import org.apache.spark.ml.Model;
 import org.apache.spark.ml.Pipeline;
+import org.apache.spark.ml.PipelineModel;
 import org.apache.spark.ml.PipelineStage;
+import org.apache.spark.ml.PredictionModel;
 import org.apache.spark.ml.evaluation.RegressionEvaluator;
 import org.apache.spark.ml.feature.OneHotEncoder;
+import org.apache.spark.ml.feature.VectorAssembler;
 import org.apache.spark.ml.param.ParamMap;
+import org.apache.spark.ml.regression.GBTRegressionModel;
 import org.apache.spark.ml.regression.GBTRegressor;
 import org.apache.spark.ml.tuning.CrossValidator;
 import org.apache.spark.ml.tuning.CrossValidatorModel;
@@ -23,8 +31,10 @@ public class GBMExpectedLoad {
 	private String path = "data/second_load";
 
 	private GBTRegressor gbtr;
-
-	public Dataset<Row> loadData(SparkSession spark) {
+	private Dataset<Row>[] splits = null;
+	private final String MODEL_PATH = "model/gbrt_model";
+	
+	public boolean loadData(SparkSession spark) {
 
 		StructType schema = new StructType(
 				new StructField[] { new StructField("label", DataTypes.DoubleType, false, Metadata.empty()),
@@ -32,53 +42,40 @@ public class GBMExpectedLoad {
 						new StructField("minute", DataTypes.IntegerType, false, Metadata.empty()),
 						new StructField("second", DataTypes.IntegerType, false, Metadata.empty()) });
 
-		// Dataset<Row> data = spark.read().load(path);
 		DataFrameReader reader = spark.read();
 		reader.option("sep", " ");
 		reader.option("quote ", "\"");
 		reader.schema(schema);
 		Dataset<Row> data = reader.csv(path);
-
-		// data.show();
-		// data.printSchema();
-
-		// Split the data into training and test sets (30% held out for testing)
-		// Dataset<Row>[] splits = data.randomSplit(new double[] { 0.7, 0.3 });
-
-		return data;
-	}
-
-	public Dataset<Row> transform(Dataset<Row> data) {
-
-		OneHotEncoder oheHour = new OneHotEncoder().setDropLast(false).setInputCol("hour").setOutputCol("oneHotHour");
-		Dataset<Row> ds1 = oheHour.transform(data);
-
-		OneHotEncoder oheMinute = new OneHotEncoder().setDropLast(false).setInputCol("minute")
-				.setOutputCol("oneHotMinute");
-		Dataset<Row> ds2 = oheMinute.transform(ds1);
-
-		OneHotEncoder oheSecond = new OneHotEncoder().setDropLast(false).setInputCol("second")
-				.setOutputCol("oneHotSecond");
-		Dataset<Row> ds3 = oheSecond.transform(ds2);
-
-		ds3.show();
-		ds3.printSchema();
-
-		return ds3;
+		
+		splits = data.randomSplit(new double[] { 0.8, 0.2 }, 42);
+		
+		if (data.count() > 0)
+			return true;
+		return false;
 	}
 
 	public Pipeline buildPipeline() {
 
-		gbtr = new GBTRegressor().setLabelCol("label").setFeaturesCol("oneHotSecond");
-		Pipeline pipeline = new Pipeline().setStages(new PipelineStage[] { gbtr });
+		gbtr = new GBTRegressor().setLabelCol("label").setFeaturesCol("mergeFeature");
+		
+		
+		OneHotEncoder oheHour = new OneHotEncoder().setDropLast(false).setInputCol("hour").setOutputCol("oneHotHour");
+		OneHotEncoder oheMinute = new OneHotEncoder().setDropLast(false).setInputCol("minute")
+				.setOutputCol("oneHotMinute");
+		OneHotEncoder oheSecond = new OneHotEncoder().setDropLast(false).setInputCol("second")
+				.setOutputCol("oneHotSecond");
+		String[] cols = {"oneHotHour", "oneHotMinute", "oneHotSecond"};
+		VectorAssembler va = new VectorAssembler().setInputCols(cols).setOutputCol("mergeFeature");
+		
+		Pipeline pipeline = new Pipeline().setStages(new PipelineStage[] {oheHour,oheMinute,oheSecond, va, gbtr });
+		
 		return pipeline;
 	}
 
 	public CrossValidatorModel train(Pipeline pipeline, Dataset<Row> data) {
 
-		Dataset<Row>[] splits = data.randomSplit(new double[] { 0.7, 0.3 });
-
-		ParamMap[] paramGrid = new ParamGridBuilder().addGrid(gbtr.maxIter(), new int[] { 50, 100, 150 })
+		ParamMap[] paramGrid = new ParamGridBuilder().addGrid(gbtr.maxIter(), new int[] { 200 })
 				.addGrid(gbtr.maxDepth(), new int[] { 1, 2, 3})
 				.build();
 
@@ -86,37 +83,46 @@ public class GBMExpectedLoad {
 				.setEstimatorParamMaps(paramGrid).setNumFolds(5); 
 
 		// Run cross-validation, and choose the best set of parameters.
-		CrossValidatorModel cvModel = cv.fit(splits[0]);
+		CrossValidatorModel cvModel = cv.fit(data);
 
-		Dataset<Row> predictions = cvModel.transform(splits[1]);
-		for (Row r : predictions.select("label", "prediction").collectAsList()) {
-			System.out.println("label, prediction (" + r.get(0) + ", " + r.get(1) + ")");
+		PipelineModel plm = (PipelineModel) cvModel.bestModel();
+		
+		GBTRegressionModel grm = (GBTRegressionModel)(plm.stages()[4]);
+		try {
+			grm.write().overwrite().save(MODEL_PATH);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
+		System.out.println("NumTree:"+grm.getNumTrees() + "\tMaxIter:"+grm.getMaxIter()+"\tMaxDepth:"+grm.getMaxDepth());
+		
+		return cvModel;
+	}
+	
+	public void evalute(CrossValidatorModel cvModel, Dataset<Row> data) {
+		
+		Dataset<Row> predictions = cvModel.transform(data);
 
-		// Select example rows to display.
-		System.out.println("Prediction...................");
-		predictions.select("prediction", "label", "oneHotHour", "oneHotMinute", "oneHotSecond").show(100);
+		//predictions.select("prediction", "label", "oneHotHour", "oneHotMinute", "oneHotSecond").show(100);
 
 		// Select (prediction, true label) and compute test error
 		RegressionEvaluator evaluator = new RegressionEvaluator().setLabelCol("label").setPredictionCol("prediction")
 				.setMetricName("rmse");
 		double rmse = evaluator.evaluate(predictions);
 		System.out.println("Root Mean Squared Error (RMSE) on test data = " + rmse);
-
-		return cvModel;
 	}
 
 	public void process() {
 
 		SparkSession spark = SparkSession.builder().master("local").appName("JavaPaytmlabsChallenge").config("spark.driver.host", "localhost").getOrCreate();
 
-		Dataset<Row> data = loadData(spark);
-		data = transform(data);
+		loadData(spark);
 
 		Pipeline pipeline = buildPipeline();
 
-		CrossValidatorModel cvModel = train(pipeline, data);
+		CrossValidatorModel cvModel = train(pipeline, this.splits[0]);
 
+		evalute (cvModel, this.splits[1]);
+		
 		spark.stop();
 	}
 
@@ -124,7 +130,7 @@ public class GBMExpectedLoad {
 
 		/// to solve "error - Relative path in absolute URI"
 		System.setProperty("spark.sql.warehouse.dir", "file:///C:/eclipse/eclipse-workspace");
-
+		PropertyConfigurator.configure("src/log4j.properties");
 		GBMExpectedLoad gbme = new GBMExpectedLoad();
 		gbme.process();
 
