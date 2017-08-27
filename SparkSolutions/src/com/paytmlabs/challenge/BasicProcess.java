@@ -30,6 +30,8 @@ public final class BasicProcess implements Serializable {
 
 	class ParseLine implements PairFunction<String, String, BriefRecord> {
 
+	
+		// extract fields from each record, use BriefRecord wrap request time and request url
 		@Override
 		public Tuple2<String, BriefRecord> call(String s) throws Exception {
 			
@@ -86,6 +88,8 @@ public final class BasicProcess implements Serializable {
 		
 	}
 	
+	
+	// compute session duration for all sessions
 	class ComputeSessionDuration implements Function<List<BriefRecord>, List<SessionRecord> >{
 
 		@Override
@@ -193,15 +197,6 @@ public final class BasicProcess implements Serializable {
 		
 		JavaPairRDD<String, List<BriefRecord>> rdComb = records.combineByKey(new CreateComb(), new MergeValue(), new MergeComb());
 		
-//		List<Tuple2<String, List<BriefRecord>>>  tmp = rdComb.take(1);
-//		Tuple2<String, List<BriefRecord>> ttmp = tmp.get(0);
-//		System.out.println(ttmp._1);
-//		System.out.println("size:"+ttmp._2.size());
-//		for(BriefRecord br: ttmp._2) {
-//			System.out.println("----"+br);
-//		}
-		
-		
 		JavaPairRDD<String, List<SessionRecord>> ret = rdComb.mapValues(new ComputeSessionDuration());
 		
 		List<Tuple2<String, List<SessionRecord>>> tmp2 = ret.collect();
@@ -230,6 +225,9 @@ public final class BasicProcess implements Serializable {
 		spark.stop();
 	}
 
+	
+	//compute statistics for session, average session length, total session length for each ip,
+	//unique url visits for each ip
 	public void sessionize(SparkSession spark, String path) {
 
 		DataFrameReader reader = spark.read();
